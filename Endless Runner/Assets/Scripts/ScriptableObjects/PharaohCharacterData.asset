@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 663f7a7f0db5149dc82cf6f5f94b149e, type: 3}
+  m_Name: PharaohCharacterData
+  m_EditorClassIdentifier: 
+  characterName: Pharaoh
+  runnerPrefab: {fileID: 8871573516698623876, guid: b161e1cc86cb2494ebe3f3ae2fb384ac, type: 3}
+  baseSpeed: 5
+  accelerationRate: 0.1

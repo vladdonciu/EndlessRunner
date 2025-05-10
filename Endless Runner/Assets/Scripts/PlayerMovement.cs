@@ -25,7 +25,7 @@ public class PlayerMovement : MonoBehaviour
     private Quaternion originalCameraRotation;
 
     // Proprietate publică pentru a permite accesul din alte scripturi
-    public float CurrentPlayerSpeed { get; private set; }
+    public float CurrentPlayerSpeed { get; internal set; }
 
     void Start()
     {
@@ -34,6 +34,7 @@ public class PlayerMovement : MonoBehaviour
         Camera mainCamera = GetComponentInChildren<Camera>();
         if (mainCamera != null)
         {
+            mainCamera.tag = "MainCamera"; // Forțează tag-ul corect
             cameraTransform = mainCamera.transform;
             originalCameraRotation = cameraTransform.localRotation;
         }
@@ -46,8 +47,13 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         // Verifică dacă jucătorul poate să se miște
+
         if (!canMove)
+        {
+            // Forțează resetarea vitezei în fiecare frame
+            CurrentPlayerSpeed = 0f;
             return;
+        }
 
         // Calculăm viteza curentă în funcție de distanța parcursă
         if (DistanceCounter.instance != null)

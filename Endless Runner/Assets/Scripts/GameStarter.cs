@@ -4,104 +4,58 @@ using System.Collections;
 
 public class GameStarter : MonoBehaviour
 {
-    public PlayerMovement playerMovement;
-    public Animator playerAnimator;
-    public TextMeshProUGUI startText;
-    public DistanceCounter distanceCounter; // Adăugat pentru a putea controla numărătoarea distanței
+    private PlayerMovement playerMovement;
+    private Animator playerAnimator;
 
-    private bool gameStarted = false;
-
-    void Start()
+    IEnumerator Start()
     {
-        // Asigură-te că jucătorul nu se mișcă la început
+        yield return new WaitUntil(() => UI_Manager.Instance != null);
+
+        UI_Manager.Instance.ResetUI();
+        playerMovement = FindAnyObjectByType<PlayerMovement>();
+        playerAnimator = playerMovement?.GetComponentInChildren<Animator>(true);
+
         if (playerMovement != null)
         {
-            playerMovement.enabled = true; // Păstrăm scriptul activ
-            playerMovement.canMove = false; // Dar dezactivăm mișcarea
-        }
-        else
-        {
-            Debug.LogError("PlayerMovement reference is missing!");
+            playerMovement.enabled = true;
+            playerMovement.canMove = false;
         }
 
-        // Verifică și afișează textul de start
-        if (startText != null)
-        {
-            startText.gameObject.SetActive(true);
-        }
-        else
-        {
-            Debug.LogError("Start text reference is missing!");
-        }
-
-        // Setează animația de idle
         if (playerAnimator != null)
         {
+            playerAnimator.Rebind();
             playerAnimator.Play("Breathing Idle");
-            // Asigură-te că parametrul Running este setat la false la început
-            playerAnimator.SetBool("Running", false);
-        }
-        else
-        {
-            Debug.LogError("Player Animator reference is missing!");
-        }
-
-        // Dezactivează numărătoarea distanței la început
-        if (distanceCounter != null)
-        {
-            distanceCounter.enabled = false;
         }
 
         StartCoroutine(AnimateStartText());
     }
 
+    IEnumerator AnimateStartText()
+    {
+        while (UI_Manager.Instance.startText != null && UI_Manager.Instance.startText.gameObject.activeSelf)
+        {
+            UI_Manager.Instance.startText.alpha = Mathf.PingPong(Time.time, 1);
+            yield return null;
+        }
+    }
+
     void Update()
     {
-        // Verifică dacă jocul nu a început și dacă jucătorul a dat click
-        if (!gameStarted && Input.GetMouseButtonDown(0))
+        if (UI_Manager.Instance != null &&
+            UI_Manager.Instance.startText != null &&
+            UI_Manager.Instance.startText.gameObject.activeSelf &&
+            Input.GetMouseButtonDown(0))
         {
             StartGame();
         }
     }
 
+
+
     void StartGame()
     {
-        gameStarted = true;
-
-        // Ascunde textul de start
-        if (startText != null)
-        {
-            startText.gameObject.SetActive(false);
-        }
-
-        // Activează mișcarea jucătorului
-        if (playerMovement != null)
-        {
-            playerMovement.canMove = true;
-        }
-
-        // Activează numărătoarea distanței
-        if (distanceCounter != null)
-        {
-            distanceCounter.enabled = true;
-        }
-
-        // Declanșează animația de alergare
-        if (playerAnimator != null)
-        {
-            playerAnimator.SetBool("Running", true);
-            Debug.Log("Set Running parameter to true"); // Debug pentru a verifica
-        }
+        UI_Manager.Instance.startText.gameObject.SetActive(false);
+        if (playerMovement != null) playerMovement.canMove = true;
+        if (playerAnimator != null) playerAnimator.SetBool("Running", true);
     }
-
-    IEnumerator AnimateStartText()
-    {
-        while (!gameStarted)
-        {
-            startText.alpha = Mathf.PingPong(Time.time, 1);
-            yield return null;
-        }
-    }
-
 }
-

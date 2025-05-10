@@ -5,8 +5,8 @@ using System.Collections.Generic;
 public class SegmentGenerator : MonoBehaviour
 {
     public GameObject[] segmentPrefabs;
-    public Transform player;
-    public int poolSize = 10; // Number of segments to pre-instantiate
+    public Transform player; // Se va popula automat dacă e gol
+    public int poolSize = 10; // Număr de segmente pre-instanțiate
 
     [SerializeField] int zPos = 50;
     [SerializeField] bool creatingSegment = false;
@@ -17,14 +17,14 @@ public class SegmentGenerator : MonoBehaviour
 
     private void Awake()
     {
-        // Initialize pools for each segment type
+        // Inițializează pool-urile pentru fiecare tip de segment
         segmentPools = new Queue<GameObject>[segmentPrefabs.Length];
 
         for (int i = 0; i < segmentPrefabs.Length; i++)
         {
             segmentPools[i] = new Queue<GameObject>();
 
-            // Pre-instantiate segments
+            // Pre-instanțierea segmentelor
             for (int j = 0; j < poolSize; j++)
             {
                 GameObject segment = Instantiate(segmentPrefabs[i]);
@@ -36,12 +36,26 @@ public class SegmentGenerator : MonoBehaviour
 
     void Start()
     {
-        // Găsește jucătorul dacă nu este atribuit
+        // Găsește jucătorul dacă nu este atribuit manual în Inspector
         if (player == null)
         {
-            player = GameObject.FindGameObjectWithTag("Player")?.transform;
-            if (player == null)
-                Debug.LogError("Player transform not assigned and couldn't be found!");
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            if (playerObject == null && CharacterSelectionManager.Instance != null && CharacterSelectionManager.Instance.selectedCharacter != null)
+            {
+                // CAZ RAR: Dacă nu există încă în scenă, încearcă să găsești runnerPrefab-ul
+                // ATENȚIE: runnerPrefab-ul din ScriptableObject nu este instanța din scenă!
+                // Deci, această linie va funcționa doar dacă runnerPrefab-ul este deja instanțiat și are tag-ul "Player"
+                playerObject = GameObject.Find(CharacterSelectionManager.Instance.selectedCharacter.runnerPrefab.name + "(Clone)");
+            }
+
+            if (playerObject != null)
+            {
+                player = playerObject.transform;
+            }
+            else
+            {
+                Debug.LogError("Player transform not found! Asignează manual sau verifică instanțierea.");
+            }
         }
 
         // Generează primul segment la start
@@ -63,7 +77,7 @@ public class SegmentGenerator : MonoBehaviour
         CheckPlayerPosition();
     }
 
-    // Get a segment from the pool
+    // Scoate un segment din pool
     private GameObject GetSegmentFromPool(int segmentType)
     {
         if (segmentPools[segmentType].Count > 0)
@@ -74,20 +88,19 @@ public class SegmentGenerator : MonoBehaviour
         }
         else
         {
-            // If pool is empty, instantiate a new one
+            // Dacă pool-ul e gol, instanțiază unul nou
             GameObject segment = Instantiate(segmentPrefabs[segmentType]);
             return segment;
         }
     }
 
-    // Return segment to the pool instead of destroying
+    // Returnează segmentul în pool în loc să-l distrugă
     private void ReturnSegmentToPool(GameObject segment, int segmentType)
     {
         segment.SetActive(false);
         segmentPools[segmentType].Enqueue(segment);
     }
 
-    // Update your SegmentGen coroutine to use pooling
     IEnumerator SegmentGen()
     {
         int segmentNum = Random.Range(0, segmentPrefabs.Length);
@@ -124,7 +137,6 @@ public class SegmentGenerator : MonoBehaviour
         }
     }
 
-    // Update your SegmentTracker class to include segment type
     private class SegmentTracker
     {
         public GameObject segment;
@@ -143,7 +155,6 @@ public class SegmentGenerator : MonoBehaviour
         }
     }
 
-    // Update your deletion method to return to pool
     IEnumerator DeleteSegmentAfterDelay(SegmentTracker tracker, int index, float delay)
     {
         yield return new WaitForSeconds(delay);
